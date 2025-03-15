@@ -53,6 +53,33 @@ def hash_object(args):
         with open(Path(".git/objects")/sub_dir/obj_name, "wb") as f:
             f.write(compressed_blob)
 
+def ls_tree(args):
+    name_only = args.name_only
+    tree_sha = args.tree_sha
+    sub_dir = tree_sha[:2]
+    object_sha = tree_sha[2:]
+    object_path = Path(".git/objects")/sub_dir/object_sha
+    if not object_path.is_file():
+        print("Object not found.")
+        return
+    with open(object_path, "rb") as f:
+        contents = zlib.decompress(f.read())
+    header, contents = contents.split(b"\0", maxsplit=1)
+    i = 0
+    while i < len(contents):
+        temp = []
+        while contents[i] != 0:
+            temp.append(chr(contents[i]))
+            i += 1
+        mode, name = "".join(temp).split(maxsplit=1)
+        i += 1
+        obj_raw_sha = contents[i:i+20]
+        i += 20
+        if name_only:
+            print(name)
+        else:
+            print(mode, name, obj_raw_sha)
+            
 
 def main():
     parser = argparse.ArgumentParser()
@@ -66,10 +93,15 @@ def main():
     cat_file_parser.add_argument("-p", action="store_true")
     cat_file_parser.set_defaults(func=cat_file)
 
-    cat_file_parser = subparser.add_parser("hash-object")
-    cat_file_parser.add_argument("filepath")
-    cat_file_parser.add_argument("-w", action="store_true")
-    cat_file_parser.set_defaults(func=hash_object)
+    hash_object_parser = subparser.add_parser("hash-object")
+    hash_object_parser.add_argument("filepath")
+    hash_object_parser.add_argument("-w", action="store_true")
+    hash_object_parser.set_defaults(func=hash_object)
+
+    hash_object_parser = subparser.add_parser("ls-tree")
+    hash_object_parser.add_argument("tree_sha")
+    hash_object_parser.add_argument("--name-only", action="store_true")
+    hash_object_parser.set_defaults(func=ls_tree)
 
     args = parser.parse_args()
     if args.func:
