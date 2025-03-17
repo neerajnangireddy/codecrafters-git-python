@@ -127,9 +127,9 @@ def main():
     if sub_command == "init":
         init(args)
     elif sub_command == "cat-file":
-        cat_file(args.p)
+        cat_file(args.blob_sha, args.p)
     elif sub_command == "hash-object":
-        _, hash = hash_object(args.filepath, args.write_enabled)
+        _, hash = hash_object(args.filepath, args.w)
         print(hash)
     elif sub_command == "ls-tree":
         ls_tree(args.tree_sha, args.name_only)
